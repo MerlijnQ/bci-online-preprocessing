@@ -8,6 +8,8 @@ from scipy.signal import butter, filtfilt, hilbert
 from src.filters import OnlineBandpass
 from scipy.signal import correlate
 
+np.random.seed(42)
+
 FS = 250
 N_CHANNELS = 1  
 
