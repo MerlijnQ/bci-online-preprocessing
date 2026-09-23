@@ -28,3 +28,4 @@ class OnlineBandpass:
             [sample], axis=0, zi=self.zi
         )
         return y[0]
+
