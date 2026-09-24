@@ -3,7 +3,7 @@ Causal EEG filters for real-time use
 """
 
 import numpy as np
-from scipy.signal import butter, lfilter
+from scipy.signal import butter, lfilter, filtfilt
 
 class OnlineBandpass:
     """
@@ -29,3 +29,11 @@ class OnlineBandpass:
         )
         return y[0]
 
+
+class QuasiCausalFilter:
+    def __init__(self, fs, low, high, order=4):
+        self.b, self.a = butter(order, [low, high], btype="band", fs=fs)
+
+    def process_window(self, window):
+        # use filtfilt (non-causal filter) on the window
+        return filtfilt(self.b, self.a, window, axis=0)

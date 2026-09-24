@@ -5,28 +5,51 @@ Sliding window utilities for streaming data
 import numpy as np
 
 class SlidingWindow:
-    def __init__(self, size, step):
+    def __init__(self, size, step, channels):
         self.size = size
         self.step = step
-        self.buffer = []
-        self.counter = 0
+        self.channels = channels
+        self.buffer = np.empty((0, channels))
+        self.step_counter = 0
+        self.is_full = False
 
-    def update(self, sample):
-        #Fix it to work with multiple channels such that the buffer becomes size (buffer, channels)
-        #Fix is to work with a chunk being provided and added
-        
+    def update(self, data):
+        # Accepts a single sample of shape (channels,) 
+        # or a chunk of shape (n_samples, channels).
+        data = np.asarray(data)
 
-        self.buffer.append(sample)
+        chunk = np.atleast_2d(data)
+        self.buffer = np.vstack((self.buffer, chunk))
 
-        if len(self.buffer) > self.size:
-            self.buffer.pop(0)
+        # Check
+        if not self.is_full:
+            # check it window is full
+            if len(self.buffer) >= self.size:
+                self.is_full = True
+                # when window is full, restart counter
+                self.step_counter = 0
+                # Return most recent window 
+                return self.buffer[-self.size:].T
+            return None
 
-        if len(self.buffer) == self.size and self.counter % self.step == 0:
-            self.counter += 1
-            window = np.array(self.buffer)
-            if len(window.shape) > 1:
-                return window.T
-            else:
-                return window
+        # increase the counter. This also works for chunks of samples
+        self.step_counter += len(chunk)
+
+        # if there are too many samples
+        if self.step_counter >= self.step:
+            self.step_counter = 0
+            # Trim excess historical buffer to prevent unbounded growth
+            if len(self.buffer) > self.size + self.step:
+                self.buffer = self.buffer[-self.size:]
+            return self.buffer[-self.size:].T
 
         return None
+
+# window = SlidingWindow(size = 4, step = 2, channels = 2)
+
+# test = window.update((5,5))
+# test = window.update((6,6))
+# test = window.update((7,7))
+# test = window.update((8,8))
+# print(window.step_counter)
+# print(test)
