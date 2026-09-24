@@ -18,8 +18,7 @@ class SlidingWindow:
         # or a chunk of shape (n_samples, channels).
         data = np.asarray(data)
 
-        chunk = np.atleast_2d(data)
-        self.buffer = np.vstack((self.buffer, chunk))
+        self.buffer = np.vstack((self.buffer, data))
 
         # Check
         if not self.is_full:
@@ -33,7 +32,7 @@ class SlidingWindow:
             return None
 
         # increase the counter. This also works for chunks of samples
-        self.step_counter += len(chunk)
+        self.step_counter += len(data)
 
         # if there are too many samples
         if self.step_counter >= self.step:
@@ -45,11 +44,3 @@ class SlidingWindow:
 
         return None
 
-# window = SlidingWindow(size = 4, step = 2, channels = 2)
-
-# test = window.update((5,5))
-# test = window.update((6,6))
-# test = window.update((7,7))
-# test = window.update((8,8))
-# print(window.step_counter)
-# print(test)

@@ -10,7 +10,7 @@ from scipy.signal import butter, filtfilt, hilbert
 
 FS = 250
 N_CHANNELS = 8
-USE_CHUNK = True
+USE_CHUNK = False
 
 streams = resolve_streams(1)
 inlet = StreamInlet(streams[0])
@@ -26,11 +26,14 @@ quasi_filter = QuasiCausalFilter(fs=FS, low=8, high=30, order=4)
 raw_window = SlidingWindow(size=FS, step=FS // 4, channels=N_CHANNELS)
 
 while True:
-    if USE_CHUNK:
-        data, _ = inlet.pull_chunk()  # Returns list of lists: [[ch0, ch1, ...], ...]
-    else:
-        data, _ = inlet.pull_sample()  # Returns single list: [ch0, ch1, ...]
 
+    if USE_CHUNK:
+        data, _ = inlet.pull_chunk() 
+    else:
+        data, _ = inlet.pull_sample()  
+
+    raw_win = None
+    causal_win = None
 
     if data is not None and len(data) > 0:
         # 1. Update causal path
@@ -49,10 +52,10 @@ while True:
 
         causal_win_time_first = causal_win.T
 
-        # # Inspect the latest sample (rightmost edge: t = now)
-        # latest_causal = causal_win_time_first[-1, 0]
-        # latest_quasi = quasi_win_time_first[-1, 0]
+        # Inspect the latest sample (rightmost edge: t = now)
+        latest_causal = causal_win_time_first[-1, 0]
+        latest_quasi = quasi_win_time_first[-1, 0]
 
-        # print(
-        #     f"Latest sample ch0 -> Causal: {latest_causal:+.3f} | Quasi: {latest_quasi:+.3f}"
-        # )
+        print(
+            f"Latest sample ch0 -> Causal: {latest_causal:+.3f} | Quasi: {latest_quasi:+.3f}"
+        )

@@ -19,15 +19,17 @@ class OnlineBandpass:
         else:
             self.zi=None
 
-    def process(self, sample):
+    def process(self, data):
         """
         Process one multichannel EEG sample
         """
-        y, self.zi = lfilter(
-            self.b, self.a,
-            [sample], axis=0, zi=self.zi
-        )
-        return y[0]
+        # adjusted so it accepts chunks of samples
+        x = np.atleast_2d(np.asarray(data, dtype=float))
+        if self.zi is None:
+            # lfilter returns only y when zi isn't passed
+            return lfilter(self.b, self.a, x, axis=0)
+        y, self.zi = lfilter(self.b, self.a, x, axis=0, zi=self.zi)
+        return y
 
 
 class QuasiCausalFilter:
