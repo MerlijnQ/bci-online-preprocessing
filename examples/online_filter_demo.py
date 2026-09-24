@@ -16,11 +16,9 @@ USE_CHUNKING = False
 
 print("Staring experiment")
 streams = resolve_byprop("type", "EEG", 1, timeout= 5)
-print("wut2")
 print(streams[0])
 inlet = StreamInlet(streams[0])
-print("Wut")
-filt = OnlineBandpass(FS, 8, 30, N_CHANNELS, USE_ZI)
+filt = OnlineBandpass(FS, 8, 30, N_CHANNELS, use_zi=USE_ZI)
 
 plt.ion()
 fig, ax = plt.subplots()
@@ -36,17 +34,20 @@ else:
 start = time.time()
 end = start + 60
 
-while time.time() < start:
+while time.time() < end:
     sample, timestamp = pull_func()
+    if np.size(timestamp) == 0:          
+        continue
     sample = filt.process(sample)
 
-    data.append(sample) # might need to be extend for the chunking.
-    
-    latency = local_clock() - timestamp
-    latencies.append(latency)
+    data.extend(sample) # extend for chunking
 
-    if len(data) > FS:
-        data.pop(0)
+    # in the case of a chunk, there are multiple timestamps
+    ts = np.asarray(timestamp)
+    latency = local_clock() - ts
+    latencies.extend(np.atleast_1d(latency))
+
+    data = data[-FS:]                  
 
     ax.clear()
     ax.plot(data)
