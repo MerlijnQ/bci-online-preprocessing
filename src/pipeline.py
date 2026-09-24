@@ -6,26 +6,30 @@ from pylsl import StreamInlet, resolve_streams
 from src.filters import OnlineBandpass, QuasiCausalFilter
 from src.windowing import SlidingWindow
 from scipy.signal import butter, filtfilt, hilbert
-
+import resource
+import time
 
 FS = 250
 N_CHANNELS = 8
-USE_CHUNK = False
+USE_CHUNK = True
 
 streams = resolve_streams(1)
 inlet = StreamInlet(streams[0])
 
-# Causal filter: filter, then window
+# Causal filter
 causal_filter = OnlineBandpass(fs=FS, low=8, high=30, n_channels=N_CHANNELS)
-
 causal_window = SlidingWindow(size=FS, step=FS // 4, channels=N_CHANNELS)
 
 
-# Quasi-causal: window, then buffer
+# Quasi-causal
 quasi_filter = QuasiCausalFilter(fs=FS, low=8, high=30, order=4)
 raw_window = SlidingWindow(size=FS, step=FS // 4, channels=N_CHANNELS)
 
-while True:
+
+start = time.time()
+end = start + 30
+
+while time.time() < end:
 
     if USE_CHUNK:
         data, _ = inlet.pull_chunk() 
@@ -36,11 +40,11 @@ while True:
     causal_win = None
 
     if data is not None and len(data) > 0:
-        # 1. Update causal path
+        # Causal filter: first filter, then window
         filtered_data = causal_filter.process(data)
         causal_win = causal_window.update(filtered_data)
 
-        # 2. Update raw path for quasi-causal processing
+        # Quasi-causal filter: first window, then filter
         raw_win = raw_window.update(data)
     
     # Both windows emit at the exact same step interval

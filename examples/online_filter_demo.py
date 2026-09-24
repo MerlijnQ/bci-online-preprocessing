@@ -17,6 +17,8 @@ print("Staring experiment")
 streams = resolve_byprop("type", "EEG", 1, timeout= 5)
 print(streams[0])
 inlet = StreamInlet(streams[0])
+# time correction
+offset = inlet.time_correction()
 # filter with zi
 filt = OnlineBandpass(FS, 8, 30, N_CHANNELS, use_zi=True)
 # filter without zi
@@ -35,7 +37,7 @@ else:
     pull_func = inlet.pull_sample
 
 start = time.time()
-end = start + 10
+end = start + 15
 
 while time.time() < end:
     sample, timestamp = pull_func()
@@ -50,34 +52,39 @@ while time.time() < end:
 
     # in the case of a chunk, there are multiple timestamps
     ts = np.asarray(timestamp)
+    ts = ts + offset
     latency = local_clock() - ts
     latencies.extend(np.atleast_1d(latency))
 
-    data = data[-2 * FS:]              # show 2 seconds instead of 1
-    data_nozi = data_nozi[-2 * FS:]
+    if len(data) == 250:
+        data = data[-1 * FS:]            
+        data_nozi = data_nozi[-1 * FS:]
 
-    ax.clear()
-    ax.plot(np.array(data)[:, 0])                          # channel 0 only
-    ax.set_title("Filtered EEG ch0 (8–30 Hz), zi preserved")
-
-    ax_nozi.clear()
-    ax_nozi.plot(np.array(data_nozi)[:, 0])                # channel 0 only
-    ax_nozi.axvline(max(0, len(data_nozi) - len(sample)), color="r", ls=":")   # where the newest chunk starts
-    ax_nozi.set_title("Filtered EEG ch0 (8–30 Hz), zi reset every chunk")
-
-    plt.pause(0.5)                     # was 0.01: now each chunk is ~125 samples
+        break
 
 
-    # data = data[-FS:]     
-    # data_nozi = data_nozi[-FS:]             
+ax.clear()
+ax.plot(np.array(data)[:, 0])                          # channel 0 only
+if USE_CHUNKING:
+    ax.set_title("Filtered EEG ch0, zi preserved (chunking)")
+else:
+    ax.set_title("Filtered EEG ch0, zi preserved (singular samples)")
 
-    # ax.clear()
-    # ax.plot(data)
-    # ax.set_title("Filtered EEG (8–30 Hz), zi preserved")
-    # ax_nozi.clear()
-    # ax_nozi.plot(data_nozi)
-    # ax_nozi.set_title("Filtered EEG (8–30 Hz), zi reset every chunk")
-    # plt.pause(0.01)
+ax_nozi.clear()
+ax_nozi.plot(np.array(data_nozi)[:, 0])                # channel 0 only
+ax_nozi.axvline(max(0, len(data_nozi) - len(sample)), color="r", ls=":")   # where the newest chunk starts
+if USE_CHUNKING:
+    ax.set_title("Filtered EEG ch0, zi resets at input (chunking)")
+else:
+    ax.set_title("Filtered EEG ch0, zi resets at input (singular samples)")
+
+                     
+fig.tight_layout()
+if USE_CHUNKING:
+    plt.savefig("zi_comparison_chunking.png")
+else:
+    plt.savefig("zi_comparison_samples.png")
 
 plt.close()
-print(f"mean latency {np.mean(np.array(latencies))}")
+print(f"mean latency: {np.mean(np.array(latencies)) * 1000}")
+
