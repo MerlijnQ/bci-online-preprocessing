@@ -21,6 +21,9 @@ offline = filtfilt(b, a, signal[:, 0])
 online_filt = OnlineBandpass(FS, 8, 30, N_CHANNELS)
 online = [online_filt.process([s])[0] for s in signal[:, 0]]
 
+offline = np.array(offline).squeeze()
+online = np.array(online).squeeze()
+
 # https://medium.com/data-science/instantaneous-phase-and-magnitude-with-the-hilbert-transform-40a73985be07
 # https://medium.com/@RaghavKrishna25/hilbert-transform-in-action-from-signals-to-insights-206edb017f2f
 # https://www.youtube.com/watch?v=7CimsUF8jwI
@@ -47,6 +50,8 @@ print(f"the phase shift is {phase_difference_deg} degrees")
 
 # returns an array of the discrete cross-correlation between the two filtered signals
 # the length of the cross-correlation is 2*N - 1 because it looks at the shift in both direction
+print(online.shape, offline.shape)
+
 xcorr = correlate(online, offline)
 
 
@@ -66,6 +71,6 @@ print(f"the time delay is {time_shift_seconds} milliseconds or {time_shift_secon
 plt.plot(offline, label="offline (filtfilt)")
 plt.plot(online, label="online (causal)")
 plt.legend()
-plt.title("Offline vs Online Filtering")
-plt.show()
+# plt.title("Offline vs Online Filtering")
+plt.savefig("OnlinevsOffline.pdf")
 
