@@ -1,5 +1,5 @@
 """
-Causal EEG filters for real-time use
+Causal EEG filters for real-time use; altered script from original repo
 """
 
 import numpy as np
@@ -21,7 +21,7 @@ class OnlineBandpass:
 
     def process(self, data):
         """
-        Process one multichannel EEG sample
+        Process multichannel EEG sample
         """
         # adjusted so it accepts chunks of samples
         x = np.atleast_2d(np.asarray(data, dtype=float))
@@ -33,6 +33,9 @@ class OnlineBandpass:
 
 
 class QuasiCausalFilter:
+    """
+    Quasi-causal band-pass filter
+    """
     def __init__(self, fs, low, high, order=4):
         self.b, self.a = butter(order, [low, high], btype="band", fs=fs)
 

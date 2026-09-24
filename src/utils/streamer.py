@@ -1,5 +1,5 @@
 """
-Simulated EEG stream using Lab Streaming Layer (LSL)
+Simulated EEG stream using Lab Streaming Layer (LSL); copied from previous repo
 """
 
 import time

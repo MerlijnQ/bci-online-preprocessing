@@ -1,12 +1,10 @@
 """
-Minimal real-time preprocessing pipeline
+Minimal real-time preprocessing pipeline; altered script from original repo
 """
 
 from pylsl import StreamInlet, resolve_streams
-from src.filters import OnlineBandpass, QuasiCausalFilter
-from src.windowing import SlidingWindow
-from scipy.signal import butter, filtfilt, hilbert
-import resource
+from src.utils.filters import OnlineBandpass, QuasiCausalFilter
+from src.utils.windowing import SlidingWindow
 import time
 
 FS = 250
